@@ -128,6 +128,10 @@ class Verifi(Resource):
 ###########################
 ##### BEGIN: Log in #####
 #########################
+import base64
+parserBasic = reqparse.RequestParser()
+parserBasic.add_argument('Authorization', type=str, help='Authorization', location='headers', required=True)
+
 parserLogIn = reqparse.RequestParser()
 parserLogIn.add_argument('email', type=str, help='Email', location='json', required=True)
 parserLogIn.add_argument('password', type=str, help='Password', location='json', required=True)
@@ -138,8 +142,22 @@ AUDIENCE_MOBILE = "myMobileApp"
 
 @api.route('/login')
 class Login(Resource):
-    @api.expect(parserLogIn)
+    @api.expect(parserBasic, parserLogIn)
     def post(self):
+        
+        args        = parserBasic.parse_args()
+        basicAuth   = args['Authorization']
+        # basicAuth is "Basic bWlyemEuYWxpbS5tQGdtYWlsLmNvbTp0aGlzSXNNeVBhc3N3b3Jk"
+        base64Str   = basicAuth[6:] # Remove first-6 digits (remove "Basic ")
+        # base64Str is "bWlyemEuYWxpbS5tQGdtYWlsLmNvbTp0aGlzSXNNeVBhc3N3b3Jk"
+        base64Bytes = base64Str.encode('ascii')
+        msgBytes    = base64.b64decode(base64Bytes)
+        pair        = msgBytes.decode('ascii')
+        # pair is mirza.alim.m@gmail.com:thisIsMyPassword
+        email, password = pair.split(':')
+        
+
+
         # BEGIN: Get request parameters.
         args        = parserLogIn.parse_args()
         email       = args['email']
@@ -171,10 +189,10 @@ class Login(Resource):
                 'aud': AUDIENCE_MOBILE, # AUDIENCE_WEB
                 'iss': ISSUER,
                 'iat': datetime.utcnow(),
-                'exp': datetime.utcnow() + timedelta(hours = 4)
+                'exp': datetime.utcnow() + timedelta(hours = 2)
             }
             token = jwt.encode(payload, SECRET_KEY)
-            return {
+            return {'message' : 'Login Berhasil',
                 'token': token
             }, 200
         else:
