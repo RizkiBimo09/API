@@ -1,4 +1,4 @@
-from flask import Flask, make_response, jsonify, render_template, session
+from flask import Flask, make_response, jsonify, render_template, session, send_file
 from flask_restx import Resource, Api, reqparse
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -6,6 +6,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 import jwt, os, random
 from flask_mail import Mail, Message
+from werkzeug.datastructures import FileStorage
+from werkzeug.utils import secure_filename
+
+import os
+import shutil
+import subprocess
+
+
 
 app = Flask(__name__) # Instantiation of Flask object.
 api = Api(app)        # Instantiation of Flask-RESTX object.
@@ -192,7 +200,7 @@ class Login(Resource):
                 'aud': AUDIENCE_MOBILE, # AUDIENCE_WEB
                 'iss': ISSUER,
                 'iat': datetime.utcnow(),
-                'exp': datetime.utcnow() + timedelta(hours = 2)
+                'exp': datetime.utcnow() + timedelta(hours = 8)
             }
             token = jwt.encode(payload, SECRET_KEY)
             return {'message' : 'Login Berhasil',
@@ -215,6 +223,39 @@ def decodetoken(jwtToken):
     return decode_result
 #########################
 ##### END: Log in #####
+#######################
+
+#########################
+##### BEGIN: Upload Video #####
+#######################
+
+ALLOWED_EXTENSIONS = {'3gp', 'mkv', 'avi', 'mp4'}
+def allowed_file(filename):
+    return '.' in filename and \
+        filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+detectParser = api.parser()
+detectParser.add_argument('video', location='files', type=FileStorage, required=True)
+@api.route('/detect')
+class Detect(Resource):
+    @api.expect(detectParser)
+    def post(self):
+        args = detectParser.parse_args()
+        video = args['video']
+        if video and allowed_file(video.filename):
+            filename = secure_filename(video.filename)
+            video.save(os.path.join("./video", filename))
+            subprocess.run(['python', 'detect.py', '--source', f'./video/{filename}', '--weights', 'best.pt', '--name', f'{filename}'])
+            print('success predict')
+            os.remove(f'./video/{filename}')
+            print('success remove')
+            return send_file(os.path.join(f"./runs/detect/{filename}", filename), mimetype='video/mp4', as_attachment=True, download_name=filename)
+        else:
+            return {'message' : 'invalid file extension'},400
+
+
+#########################
+##### END: Upload Video #####
 #######################
 
 ####################################
