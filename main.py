@@ -356,5 +356,17 @@ class EditUser(Resource):
 ################################
 ##### END: Edit user ####
 ################################
+
+@app.route("/realtime")
+def hello_world():
+    return render_template('index.html')
+
+@app.route("/opencam", methods=['GET'])
+def opencam():
+    print("here")
+    subprocess.run(['python', 'detect.py', '--source', '0', '--weights', 'best.pt'])
+    return "done"
+
+
 if __name__ == '__main__':
     app.run(ssl_context='adhoc', debug=True)
