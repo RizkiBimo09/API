@@ -8,6 +8,8 @@ import jwt, os, random
 from flask_mail import Mail, Message
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
+import pymysql
+pymysql.install_as_MySQLdb()
 
 import os
 import shutil
