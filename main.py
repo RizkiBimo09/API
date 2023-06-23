@@ -23,7 +23,8 @@ CORS(app)
 ############################
 ##### BEGIN: Database #####
 ##########################
-app.config["SQLALCHEMY_DATABASE_URI"] = "mysql://root:@127.0.0.1:3306/space_parking"
+# app.config["SQLALCHEMY_DATABASE_URI"] = "mysql://root:@127.0.0.1:3306/space_parking"
+app.config["SQLALCHEMY_DATABASE_URI"] =os.environ.get("SQLALCHEMY_DATABASE_URI")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'WhatEverYouWant'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com' # mail env config
