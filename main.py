@@ -35,7 +35,7 @@ app.config['MAIL_PASSWORD'] = os.environ.get("MAIL_PASSWORD")
 mail = Mail(app)
 db = SQLAlchemy(app) # Instantiation of Flask-SQLAlchemy object.
 
-class User(db.Model):
+class Users(db.Model):
     id          = db.Column(db.Integer(), primary_key=True, nullable=False)
     firstname   = db.Column(db.String(35), nullable=False)
     lastname    = db.Column(db.String(35), nullable=False)
@@ -80,13 +80,13 @@ class Regis(Resource):
         # END: Check re_password.
 
         # BEGIN: Check email existance.
-        user = db.session.execute(db.select(User).filter_by(email=email)).first()
+        user = db.session.execute(db.select(Users).filter_by(email=email)).first()
         if user:
             return "Email ini telah digunakan"
         # END: Check email existance.
 
         # BEGIN: Insert new user.
-        user          = User() # Instantiate User object.
+        user          = Users() # Instantiate Users object.
         user.firstname = firstname
         user.lastname = lastname
         user.email    = email
@@ -123,7 +123,7 @@ class Verifi(Resource):
             sesion = session['token']
             if otp == sesion:
                 email = session['email']
-                user = User.query.filter_by(email=email).first()
+                user = Users.query.filter_by(email=email).first()
                 user.is_verified = True
                 db.session.commit()
                 session.pop('token',None)
@@ -185,7 +185,7 @@ class Login(Resource):
 
         # BEGIN: Check email existance.
         user = db.session.execute(
-            db.select(User).filter_by(email=email)).first()
+            db.select(Users).filter_by(email=email)).first()
 
         if not user:
             return {
@@ -277,7 +277,7 @@ class DetailUser(Resource):
         try:
             jwtToken    = bearerAuth[7:]
             token = decodetoken(jwtToken)
-            user =  db.session.execute(db.select(User).filter_by(email=token['email'])).first()
+            user =  db.session.execute(db.select(Users).filter_by(email=token['email'])).first()
             user = user[0]
             data = {
                 'firstname' : user.firstname,
@@ -312,7 +312,7 @@ class Password(Resource):
         try:
             jwtToken    = bearerAuth[7:]
             token = decodetoken(jwtToken)
-            user = User.query.filter_by(id=token.get('user_id')).first()
+            user = Users.query.filter_by(id=token.get('user_id')).first()
             if check_password_hash(user.password, cu_password):
                 user.password = generate_password_hash(newpassword)
                 db.session.commit()
@@ -346,7 +346,7 @@ class EditUser(Resource):
         try:
             jwtToken    = bearerAuth[7:]
             token = decodetoken(jwtToken)
-            user = User.query.filter_by(email=token.get('email')).first()
+            user = Users.query.filter_by(email=token.get('email')).first()
             user.firstname = firstname
             user.lastname = lastname
             user.updatedAt = datenow
@@ -355,7 +355,7 @@ class EditUser(Resource):
             return {
                 'message' : 'Token Tidak valid, Silahkan Login Terlebih Dahulu'
             }, 401
-        return {'message' : 'Update User Berhasil'}, 200
+        return {'message' : 'Update Users Berhasil'}, 200
 ################################
 ##### END: Edit user ####
 ################################
